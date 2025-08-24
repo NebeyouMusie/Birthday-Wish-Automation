@@ -1,0 +1,447 @@
+{
+  "name": "Birthday Wish Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -160,
+        -48
+      ],
+      "id": "6cad00ed-7911-4e27-8ecb-c8e5c34ec203",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1iWzDJyeKn4b8t1OhAAhK4RI47miTovn3sPFytpIeVUk",
+          "mode": "list",
+          "cachedResultName": "Customer Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iWzDJyeKn4b8t1OhAAhK4RI47miTovn3sPFytpIeVUk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iWzDJyeKn4b8t1OhAAhK4RI47miTovn3sPFytpIeVUk/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        64,
+        -48
+      ],
+      "id": "e84405cd-6bae-4e57-9bf9-d07fc863b393",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "puIDvD1AGruBiW0E",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "aaf34914-dcb5-4574-8f99-d60ccb0bcc43",
+              "leftValue": "={{ \n  (() => {\n    const date = new Date($json['Date of Birth']);\n    const mm = String(date.getMonth() + 1).padStart(2, '0');\n    const dd = String(date.getDate()).padStart(2, '0');\n    return `${mm}-${dd}`;\n  })() \n}}\n",
+              "rightValue": "={{ $now.format('MM-dd').toString() }}\n",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": false
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        512,
+        -48
+      ],
+      "id": "80ab515d-a0dc-451a-be1b-c2430e8412a2",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "047c98eb-cced-4af7-8b95-064d9b527278",
+              "leftValue": "={{ $json['Birthday Wish Sent'] }}",
+              "rightValue": "No",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        288,
+        -48
+      ],
+      "id": "04172f5c-0f6a-4060-aeb5-d65ee5d8bfd0",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        688,
+        128
+      ],
+      "id": "31611f54-2a75-4ac2-9c57-1c595932fb87",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "NchtBD6sEH0vCYg4",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Get row(s) in sheet').item.json['Email Address'] }}",
+        "subject": "={{ $('Generate Subject and Message').item.json.output.subject }}",
+        "emailType": "text",
+        "message": "={{ $('Generate Subject and Message').item.json.output.message }}",
+        "options": {
+          "appendAttribution": false,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1328,
+        -64
+      ],
+      "id": "3362cf91-8d1a-4d67-9335-1062b6c24dc7",
+      "name": "Send a message",
+      "webhookId": "77fcd670-71a0-4c93-ad99-1aafaabfbbf7",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "sGGs6j9IqZ5eRl4L",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash-exp-image-generation",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash-exp-image-generation"
+        },
+        "prompt": "=You are an expert graphic designer AI tasked with creating a warm and personalized birthday greeting image for a customer. The image should prominently feature the text:\n\n\"HAPPY BIRTHDAY {{ $('Get row(s) in sheet').item.json['Customer Name'] }}\"\n\nin large, clear, and legible font, ensuring the text is fully visible without any obstruction. At the bottom of the image, include only the company name \"Fuzion Tech\" in an elegant and readable style.\n\nUse cheerful, vibrant colors and festive elements like balloons, confetti, or cake to convey celebration, but do NOT include any other text besides the above. The style should be modern, friendly, and professional, optimized for email greetings.\n\nDesign the image with dimensions of 800x400 pixels suitable for email attachments. Ensure ample contrast between text and background for maximum readability.\n\nGenerate a high-quality, visually appealing image ready to be sent as a birthday greeting email attachment.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        1104,
+        -64
+      ],
+      "id": "da733832-81d0-4f6b-84ee-72b76b6ecb3d",
+      "name": "Generate an image",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "NchtBD6sEH0vCYg4",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{  \n  \"subject\": \"Happy Birthday, [Name]! A Special Wish from Fuzion Tech\",  \n  \"message\": \"Dear [Name], We wish you a wonderful birthday filled with joy and success. Thank you for being a valued member of our community.\\n\\nBest wishes,\\nThe Fuzion Tech team\"  \n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        960,
+        128
+      ],
+      "id": "60cc19a4-334c-411d-a657-519136b5d869",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1iWzDJyeKn4b8t1OhAAhK4RI47miTovn3sPFytpIeVUk",
+          "mode": "list",
+          "cachedResultName": "Customer Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iWzDJyeKn4b8t1OhAAhK4RI47miTovn3sPFytpIeVUk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iWzDJyeKn4b8t1OhAAhK4RI47miTovn3sPFytpIeVUk/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Birthday Wish Sent": "Yes",
+            "row_number": "={{ $('Get row(s) in sheet').item.json.row_number }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Address",
+              "displayName": "Email Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date of Birth",
+              "displayName": "Date of Birth",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Birthday Wish Sent",
+              "displayName": "Birthday Wish Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1552,
+        -64
+      ],
+      "id": "9b7d38e9-2c68-4478-9c5e-cfcc2502c09f",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "puIDvD1AGruBiW0E",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Customer Name: {{ $json['Customer Name'] }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a creative and warm messaging assistant. Your task is to generate a personalized birthday message for a customer from the company \"Fuzion Tech.\" Respond with a JSON object containing two fields:\n\n    \"subject\": a tailored, engaging email subject line for the birthday message.\n\n    \"message\": a warm, friendly, and professional birthday message in formal email format, including the customer’s name if provided, celebrating their special day and expressing Fuzion Tech’s appreciation.\n\nThe message should be concise (1-3 sentences) and positive, suitable for direct customer communication. Please end the message with the following closing:\n\nBest wishes,\nThe Fuzion Tech team"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        752,
+        -64
+      ],
+      "id": "fe3973ac-f84f-492f-a8b7-bafc9e097b1d",
+      "name": "Generate Subject and Message"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Generate Subject and Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Subject and Message",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate an image": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Generate Subject and Message",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Subject and Message": {
+      "main": [
+        [
+          {
+            "node": "Generate an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8e4d7e08-455c-49f4-a813-921849b41bb2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "840154ca8ff3822257170e4b1910defa5b76a2ee2e5b52ef94b6628e655db31a"
+  },
+  "id": "xlCHOVG7X17IDcOI",
+  "tags": []
+}
